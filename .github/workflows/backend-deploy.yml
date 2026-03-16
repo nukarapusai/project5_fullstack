@@ -1,60 +1,54 @@
-name: Deploy Backend
+name: Backend CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
-      - 'backend/**'
-      - 'infra/**'
+      - "backend/**"
+      - "infra/**"
 
 env:
   AWS_REGION: ap-south-2
   ECR_REPO: project5-backend
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: cd backend && npm install
-
-      - run: cd backend && npm test -- --coverage
-
   deploy:
-    needs: test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Configure AWS
+      - name: Install Backend Dependencies
+        run: cd backend && npm install
+
+      - name: Run Tests
+        run: cd backend && npm test -- --coverage
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-2
 
       - name: Login to ECR
+        id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Docker
+      - name: Build Docker Image
         run: docker build -t project5-backend ./backend
 
-      - name: Push Docker
+      - name: Push Image to ECR
         run: |
-          docker tag project5-backend:latest ${{ steps.login-ecr.outputs.registry }}/project5-backend:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/project5-backend:latest
+          docker tag project5-backend:latest ${{ steps.ecr.outputs.registry }}/project5-backend:latest
+          docker push ${{ steps.ecr.outputs.registry }}/project5-backend:latest
 
-      - name: Deploy CDK
+      - name: Deploy Infrastructure with CDK
         run: |
           cd infra
           npm install
