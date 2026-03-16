@@ -1,0 +1,61 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'backend/**'
+      - 'infra/**'
+
+env:
+  AWS_REGION: ap-south-2
+  ECR_REPO: project5-backend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: cd backend && npm install
+
+      - run: cd backend && npm test -- --coverage
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-2
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker
+        run: docker build -t project5-backend ./backend
+
+      - name: Push Docker
+        run: |
+          docker tag project5-backend:latest ${{ steps.login-ecr.outputs.registry }}/project5-backend:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/project5-backend:latest
+
+      - name: Deploy CDK
+        run: |
+          cd infra
+          npm install
+          npx cdk deploy --require-approval never
