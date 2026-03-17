@@ -13,6 +13,10 @@ env:
   AWS_REGION: ap-south-2
   ECR_REPO: project5-backend
 
+concurrency:
+  group: backend-cicd-master
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +66,4 @@ jobs:
         run: |
           cd infra
           npm install
-          npx cdk deploy --all --require-approval never
+          npx cdk deploy NetworkStack BackendStack FrontendStack --require-approval never --concurrency 1
