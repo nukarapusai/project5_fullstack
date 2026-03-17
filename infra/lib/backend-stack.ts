@@ -35,7 +35,9 @@ export class BackendStack extends cdk.Stack {
     const service = new ecs.FargateService(this, 'BackendService', {
       cluster,
       taskDefinition: taskDef,
-      desiredCount: 1
+      desiredCount: 1,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
     });
 
     const alb = new elbv2.ApplicationLoadBalancer(this, 'ALB', {
