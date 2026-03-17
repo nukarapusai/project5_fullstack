@@ -59,6 +59,7 @@ export class BackendStack extends cdk.Stack {
         version: rds.PostgresEngineVersion.VER_14
       }),
       vpc: props.vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T3,
         ec2.InstanceSize.MICRO
