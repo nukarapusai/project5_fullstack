@@ -11,12 +11,18 @@ export class FrontendStack extends cdk.Stack {
 
     const bucket = new s3.Bucket(this, 'FrontendBucket', {
       websiteIndexDocument: 'index.html',
-      publicReadAccess: true
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      publicReadAccess: false
     });
+
+    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'FrontendOAI');
+    bucket.grantRead(originAccessIdentity);
 
     const distribution = new cloudfront.Distribution(this, 'CDN', {
       defaultBehavior: {
-        origin: new origins.S3Origin(bucket)
+        origin: new origins.S3Origin(bucket, {
+          originAccessIdentity
+        })
       }
     });
 
