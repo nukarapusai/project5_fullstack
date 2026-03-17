@@ -53,6 +53,7 @@ export class BackendStack extends cdk.Stack {
 
     listener.addTargets('ECS', {
       port: 3000,
+      protocol: elbv2.ApplicationProtocol.HTTP,
       targets: [service],
       healthCheck: {
         path: '/health',
