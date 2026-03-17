@@ -24,7 +24,7 @@ export class BackendStack extends cdk.Stack {
     const taskDef = new ecs.FargateTaskDefinition(this, 'TaskDef');
 
     const container = taskDef.addContainer('BackendContainer', {
-      image: ecs.ContainerImage.fromRegistry('nginx'),
+      image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
       memoryLimitMiB: 512
     });
 

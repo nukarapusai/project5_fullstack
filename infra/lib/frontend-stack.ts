@@ -11,7 +11,7 @@ export class FrontendStack extends cdk.Stack {
 
     const bucket = new s3.Bucket(this, 'FrontendBucket', {
       websiteIndexDocument: 'index.html',
-      publicReadAccess: false
+      publicReadAccess: true
     });
 
     const distribution = new cloudfront.Distribution(this, 'CDN', {
