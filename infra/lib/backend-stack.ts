@@ -15,11 +15,13 @@ export class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
+    const backendRepoName = process.env.ECR_REPO ?? 'project5-backend';
+
     const cluster = new ecs.Cluster(this, 'Project5Cluster', {
       vpc: props.vpc
     });
 
-    const repository = new ecr.Repository(this, 'BackendRepo');
+    const repository = ecr.Repository.fromRepositoryName(this, 'BackendRepo', backendRepoName);
 
     const taskDef = new ecs.FargateTaskDefinition(this, 'TaskDef');
 
@@ -29,7 +31,7 @@ export class BackendStack extends cdk.Stack {
     });
 
     container.addPortMappings({
-      containerPort: 80
+      containerPort: 3000
     });
 
     const service = new ecs.FargateService(this, 'BackendService', {
@@ -50,8 +52,12 @@ export class BackendStack extends cdk.Stack {
     });
 
     listener.addTargets('ECS', {
-      port: 80,
-      targets: [service]
+      port: 3000,
+      targets: [service],
+      healthCheck: {
+        path: '/health',
+        healthyHttpCodes: '200'
+      }
     });
 
     const db = new rds.DatabaseInstance(this, 'Project5DB', {
