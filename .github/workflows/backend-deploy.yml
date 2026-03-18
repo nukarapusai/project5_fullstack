@@ -6,6 +6,8 @@ on:
     paths:
       - "backend/**"
       - "infra/**"
+      - "cdk.json"
+      - ".github/iam/**"
       - ".github/workflows/backend-deploy.yml"
   workflow_dispatch:
 
