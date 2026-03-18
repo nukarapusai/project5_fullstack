@@ -14,6 +14,7 @@ on:
 env:
   AWS_REGION: ap-south-2
   ECR_REPO: project5-backend
+  CDK_QUALIFIER: p5fullstck
 
 concurrency:
   group: backend-cicd-master
@@ -36,7 +37,7 @@ jobs:
           node-version: 20
 
       - name: Install Backend Dependencies
-        run: cd backend && npm install
+        run: cd backend && npm ci
 
       - name: Run Tests
         run: cd backend && npm test -- --coverage
@@ -51,8 +52,8 @@ jobs:
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           cd infra
-          npm install
-          npx cdk bootstrap aws://$ACCOUNT_ID/${{ env.AWS_REGION }} --require-approval never
+          npm ci
+          npx cdk bootstrap aws://$ACCOUNT_ID/${{ env.AWS_REGION }} --qualifier ${{ env.CDK_QUALIFIER }} --require-approval never
 
       - name: Ensure ECR Repository Exists
         run: |
@@ -101,5 +102,5 @@ jobs:
       - name: Deploy Infrastructure with CDK
         run: |
           cd infra
-          npm install
-          npx cdk deploy NetworkStack BackendStack FrontendStack --require-approval never --concurrency 1
+          npm ci
+          npx cdk deploy NetworkStack BackendStack FrontendStack --qualifier ${{ env.CDK_QUALIFIER }} --require-approval never --concurrency 1
