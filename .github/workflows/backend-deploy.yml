@@ -3,12 +3,8 @@ name: Backend CI/CD
 on:
   push:
     branches: [master]
-    paths:
-      - "backend/**"
-      - "infra/**"
-      - "cdk.json"
-      - ".github/iam/**"
-      - ".github/workflows/backend-deploy.yml"
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 
 env:
