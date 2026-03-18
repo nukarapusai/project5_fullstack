@@ -47,6 +47,13 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Bootstrap CDK Environment
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          cd infra
+          npm install
+          npx cdk bootstrap aws://$ACCOUNT_ID/${{ env.AWS_REGION }} --require-approval never
+
       - name: Ensure ECR Repository Exists
         run: |
           aws ecr describe-repositories --repository-names ${{ env.ECR_REPO }} --region ${{ env.AWS_REGION }} || \
