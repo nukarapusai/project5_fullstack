@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export class NetworkStack extends cdk.Stack {
 
+  
   public readonly vpc: ec2.Vpc;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
