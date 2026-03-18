@@ -68,31 +68,37 @@ jobs:
           docker tag ${{ env.ECR_REPO }}:latest ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}:latest
           docker push ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}:latest
 
-      - name: Wait For BackendStack To Be Ready
+      - name: Wait For CloudFormation Stacks To Be Ready
         run: |
           set -e
-          for i in {1..40}; do
-            status=$(aws cloudformation describe-stacks --stack-name BackendStack --region ${{ env.AWS_REGION }} --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "STACK_NOT_FOUND")
-            echo "BackendStack status: $status"
-            case "$status" in
-              *_IN_PROGRESS)
-                echo "BackendStack is busy, waiting 30s..."
-                sleep 30
-                ;;
-              STACK_NOT_FOUND|CREATE_COMPLETE|UPDATE_COMPLETE|UPDATE_ROLLBACK_COMPLETE|ROLLBACK_COMPLETE)
-                echo "BackendStack is ready for deployment"
-                break
-                ;;
-              *)
-                echo "BackendStack is in unexpected state: $status"
-                exit 1
-                ;;
-            esac
+          stacks=(NetworkStack BackendStack FrontendStack)
 
-            if [ "$i" -eq 40 ]; then
-              echo "Timed out waiting for BackendStack to become ready"
-              exit 1
-            fi
+          for stack in "${stacks[@]}"; do
+            echo "Checking stack: $stack"
+            for i in {1..60}; do
+              status=$(aws cloudformation describe-stacks --stack-name "$stack" --region ${{ env.AWS_REGION }} --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "STACK_NOT_FOUND")
+              echo "$stack status: $status"
+
+              case "$status" in
+                STACK_NOT_FOUND|CREATE_COMPLETE|UPDATE_COMPLETE|UPDATE_ROLLBACK_COMPLETE|ROLLBACK_COMPLETE|DELETE_COMPLETE)
+                  echo "$stack is ready for deploy operations"
+                  break
+                  ;;
+                *_IN_PROGRESS)
+                  echo "$stack is busy, waiting 20s..."
+                  sleep 20
+                  ;;
+                *)
+                  echo "$stack is in blocking state: $status"
+                  exit 1
+                  ;;
+              esac
+
+              if [ "$i" -eq 60 ]; then
+                echo "Timed out waiting for $stack to become ready"
+                exit 1
+              fi
+            done
           done
 
       - name: Deploy Infrastructure with CDK
