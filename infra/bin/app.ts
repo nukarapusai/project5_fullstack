@@ -6,7 +6,7 @@ import { FrontendStack } from '../lib/frontend-stack';
 const app = new cdk.App();
 
 // 1. Network
-const network = new NetworkStack(app, 'NetworkStack');
+const network = new NetworkStack(app, 'NetworkStackDev');
 
 // 2. Backend (ECS, ALB, RDS)
 new BackendStack(app, 'BackendStack', {

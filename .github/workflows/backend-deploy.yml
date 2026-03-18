@@ -71,7 +71,7 @@ jobs:
       - name: Wait For CloudFormation Stacks To Be Ready
         run: |
           set -e
-          stacks=(NetworkStack BackendStack FrontendStack)
+          stacks=(NetworkStackDev BackendStack FrontendStack)
 
           for stack in "${stacks[@]}"; do
             echo "Checking stack: $stack"
@@ -105,4 +105,4 @@ jobs:
         run: |
           cd infra
           npm ci
-          npx cdk deploy NetworkStack BackendStack FrontendStack --qualifier ${{ env.CDK_QUALIFIER }} --require-approval never --concurrency 1
+          npx cdk deploy NetworkStackDev BackendStack FrontendStack --qualifier ${{ env.CDK_QUALIFIER }} --require-approval never --concurrency 1

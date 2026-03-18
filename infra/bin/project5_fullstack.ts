@@ -15,7 +15,7 @@ const stackDefaults: cdk.StackProps = {
   }),
 };
 
-const network = new NetworkStack(app, 'NetworkStack', stackDefaults);
+const network = new NetworkStack(app, 'NetworkStackDev', stackDefaults);
 
 new BackendStack(app, 'BackendStack', {
   ...stackDefaults,
