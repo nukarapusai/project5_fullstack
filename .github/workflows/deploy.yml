@@ -1,0 +1,53 @@
+name: CD Pipeline
+# add comment 
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-2
+
+      - name: Install Dependencies
+        run: |
+          cd frontend/vite
+          npm ci
+
+      - name: Build Project
+        run: |
+          cd frontend/vite
+          npm run build
+
+      - name: Deploy DEV
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          aws s3 sync frontend/vite/dist/ s3://${{ secrets.DEV_BUCKET_NAME }} --delete
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Deploy PROD
+        if: github.ref == 'refs/heads/prod'
+        run: |
+          aws s3 sync frontend/vite/dist/ s3://${{ secrets.PROD_BUCKET_NAME }} --delete
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
