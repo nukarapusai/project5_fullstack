@@ -1,41 +1,58 @@
 name: CD Pipeline
 
 on:
-workflow_dispatch:
+  push:
+    branches: [dev, prod]
+    paths:
+      - frontend/**
+      - .github/workflows/cd.yml
+  workflow_dispatch:
 
 jobs:
-deploy:
-runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v3
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  - name: Configure AWS (OIDC)
-    uses: aws-actions/configure-aws-credentials@v2
-    with:
-      role-to-assume: YOUR_IAM_ROLE_ARN
-      aws-region: ap-south-1
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-  - name: Install Dependencies
-    run: npm install
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-2
 
-  - name: Build Project
-    run: npm run build
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
 
-  - name: Deploy DEV
-    if: github.ref == 'refs/heads/dev'
-    run: |
-      aws s3 sync dist/ s3://YOUR_DEV_BUCKET --delete
-      aws cloudfront create-invalidation \
-        --distribution-id DEV_DIST_ID \
-        --paths "/*"
+      - name: Build Project
+        run: |
+          cd frontend
+          npm run build
 
-  - name: Deploy PROD
-    if: github.ref == 'refs/heads/prod'
-    run: |
-      aws s3 sync dist/ s3://YOUR_PROD_BUCKET --delete
-      aws cloudfront create-invalidation \
-        --distribution-id PROD_DIST_ID \
-        --paths "/*"
+      - name: Deploy DEV
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ secrets.DEV_BUCKET_NAME }} --delete
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Deploy PROD
+        if: github.ref == 'refs/heads/prod'
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ secrets.PROD_BUCKET_NAME }} --delete
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
 
