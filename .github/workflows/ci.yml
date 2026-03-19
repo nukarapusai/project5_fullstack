@@ -34,6 +34,9 @@ jobs:
 
       - name: Snyk Security Scan
         uses: snyk/actions/node@master
+        with:
+          command: test
+          args: --file=frontend/vite/package.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
