@@ -1,11 +1,6 @@
 name: CD Pipeline
 
 on:
-  push:
-    branches: [dev, prod]
-    paths:
-      - frontend/**
-      - .github/workflows/cd.yml
   workflow_dispatch:
 
 jobs:
