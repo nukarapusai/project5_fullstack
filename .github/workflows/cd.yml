@@ -32,18 +32,18 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd frontend
+          cd frontend/vite
           npm ci
 
       - name: Build Project
         run: |
-          cd frontend
+          cd frontend/vite
           npm run build
 
       - name: Deploy DEV
         if: github.ref == 'refs/heads/dev'
         run: |
-          aws s3 sync frontend/dist/ s3://${{ secrets.DEV_BUCKET_NAME }} --delete
+          aws s3 sync frontend/vite/dist/ s3://${{ secrets.DEV_BUCKET_NAME }} --delete
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
@@ -51,7 +51,7 @@ jobs:
       - name: Deploy PROD
         if: github.ref == 'refs/heads/prod'
         run: |
-          aws s3 sync frontend/dist/ s3://${{ secrets.PROD_BUCKET_NAME }} --delete
+          aws s3 sync frontend/vite/dist/ s3://${{ secrets.PROD_BUCKET_NAME }} --delete
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
